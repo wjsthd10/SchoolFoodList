@@ -1,6 +1,8 @@
 package com.example.schoolfoodlist.adpater;
 
 import android.content.Context;
+import android.os.Handler;
+import android.os.Message;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,10 +20,14 @@ public class SchoolListAdapter extends RecyclerView.Adapter {
 
     Context mContext;
     ArrayList<SchoolDataItem> items;
+    Handler mHandler;
 
-    public SchoolListAdapter(Context mContext, ArrayList<SchoolDataItem> items) {
+    final static int SELECT_SCHOOL = 10003;
+
+    public SchoolListAdapter(Context mContext, ArrayList<SchoolDataItem> items, Handler handler) {
         this.mContext = mContext;
         this.items = items;
+        this.mHandler = handler;
     }
 
     @NonNull
@@ -38,6 +44,16 @@ public class SchoolListAdapter extends RecyclerView.Adapter {
         SchoolViewHolder vh = (SchoolViewHolder) holder;
         vh.sName.setText(items.get(position).getsName());
         vh.sAddress.setText(items.get(position).getAddress());
+
+        vh.selectorLay.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Message msg = new Message();
+                msg.what = SELECT_SCHOOL;
+                msg.obj = items.get(position);
+                mHandler.sendMessage(msg);
+            }
+        });
     }
 
     @Override

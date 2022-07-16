@@ -39,6 +39,9 @@ public class SchoolSearchFragment extends Fragment implements View.OnClickListen
     final static String schoolAddress = "https://open.neis.go.kr/hub/schoolInfo";
     final static int SEARCH_FINISH = 10001;
     final static int SEARCH_FAILED = 10002;
+    final static int SELECT_SCHOOL = 10003;
+    final static int CALL_FOOD_LIST = 20001;
+
 
 
     //https://open.neis.go.kr/hub/schoolInfo?KEY=df2ba946955d4d1b8a9b9d767f09e25c&Type=json&pIndex=1&pSize=5&SD_SCHUL_CODE=7091382
@@ -51,6 +54,11 @@ public class SchoolSearchFragment extends Fragment implements View.OnClickListen
     LinearLayout progressLay;
 
     ArrayList<SchoolDataItem> schoolDataItems = new ArrayList<>();
+    Handler handlerMain;
+
+    public SchoolSearchFragment(Handler handler){
+        this.handlerMain = handler;
+    }
 
     @Nullable
     @Override
@@ -81,6 +89,7 @@ public class SchoolSearchFragment extends Fragment implements View.OnClickListen
                 progressLay.setVisibility(View.VISIBLE);
                 String schoolName = schoolNameEditor.getText().toString();
                 if (schoolName.equals("") || schoolName.contains("-") || schoolName.contains(".") || schoolName.contains(",") || schoolName.equals(" ")){
+                    progressLay.setVisibility(View.GONE);
                     break;
                 }
                 String address = schoolAddress
@@ -88,6 +97,7 @@ public class SchoolSearchFragment extends Fragment implements View.OnClickListen
                         +"&Type=json&pIndex=1&pSize=5"
                         +"&SCHUL_NM="+schoolName;
                 getSchoolName(address);
+
                 break;
         }
     }
@@ -112,6 +122,7 @@ public class SchoolSearchFragment extends Fragment implements View.OnClickListen
                     String jsonData = buffer.toString();
                     JSONObject obj = new JSONObject(jsonData);
                     JSONArray obj2 = obj.getJSONArray("schoolInfo");
+                    schoolDataItems.clear();
                     for (int i = 0; i < obj2.length(); i++) {
                         if (obj2.get(i).toString().contains("row")){
                             JSONObject row = obj2.getJSONObject(i);
@@ -158,13 +169,22 @@ public class SchoolSearchFragment extends Fragment implements View.OnClickListen
             switch (message.what){
                 case SEARCH_FINISH:
                     progressLay.setVisibility(View.GONE);
-                    schoolAdapter = new SchoolListAdapter(getActivity(), schoolDataItems);
+                    schoolAdapter = new SchoolListAdapter(getActivity(), schoolDataItems, mHandler);
                     schoolListView.setAdapter(schoolAdapter);
                     schoolAdapter.notifyDataSetChanged();
                     break;
                 case SEARCH_FAILED:
                     progressLay.setVisibility(View.GONE);
                     break;
+                case SELECT_SCHOOL:
+                    SchoolDataItem items = (SchoolDataItem) message.obj;
+                    Message msg = new Message();
+                    msg.what = CALL_FOOD_LIST;
+                    msg.obj = items;
+                    handlerMain.sendMessage(msg);
+                    getActivity().getSupportFragmentManager().popBackStack();
+                    break;
+
             }
             return false;
         }
